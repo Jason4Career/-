@@ -1,0 +1,70 @@
+邮件发送：
+  普通邮件：
+		1.引入message模块
+		2.在自己的业务处类似下面的调用：
+		MessageTO messageTO = new MessageTO();
+                messageTO.setContent( content );
+                messageTO.setTitle("定时发送商务合同签订与立项汇总");
+                messageTO.setMsgType(MsgType.SYS);//根据自己业务写
+                messageTO.setSendType( SendType.EMAIL);//根据自己业务写
+                messageTO.setRangeType( RangeType.SPECIFIED);//根据自己业务写
+
+                messageTO.setReceivers(sign.getSendObject().split(";") );//根据自己业务写
+                messageAPI.send(  messageTO );
+  定时发送邮件：
+	1.引入message模块
+	2.在自己的业务处类似下面的调用：
+		MessageTO messageTO = new MessageTO();
+                messageTO.setContent( content );
+                messageTO.setTitle("定时发送商务合同签订与立项汇总");
+                messageTO.setMsgType(MsgType.SYS);//根据自己业务写
+                messageTO.setSendType( SendType.EMAIL);//根据自己业务写
+                messageTO.setRangeType( RangeType.SPECIFIED);//根据自己业务写
+                //定时发送必须写
+                messageTO.setSenderId("SYSTEM");
+                messageTO.setSenderName("SYSTEM");
+
+                messageTO.setReceivers(sign.getSendObject().split(";") );//根据自己业务写
+                messageAPI.send(  messageTO );
+	3.在quartz模块的provider的builde引入自己的模块，如：商务合同模块
+		compile project(":modules:businessproject:businessproject-api")
+	4.本地测试
+		1.安装kafka:打开命令界面：wget http://mirror.bit.edu.cn/apache/kafka/0.10.2.1/kafka_2.12-0.10.2.1.tgz
+			之后输入：tar -zxvf kafka_2.12-0.10.2.1.tgz
+			,之后输入： ./bin/kafka-server-start.sh config/server.properties
+		2.启动quartz模块的provider和consumer
+		3.posman调用quartz模块任务调度(ScheduleJobAct)和任务调度组(ScheduleJobGroupAct)的add接口添加数据，例子：
+			http://192.168.0.121:51708/schedulejob-group/v1/add
+				name:businessproject
+				enable:true
+	
+			http://192.168.0.121:51708/schedulejob/v1/add
+				enable:true
+				method:checkSendEmail
+				name:商务合同定时发送邮件111
+				expression:0 55 16 * * ?
+				description:每天下午2点检测发送邮件11
+				address:localhost:51203
+				scheduleJobGroupId:86abc7b9-7dd9-461c-a748-cb1cb3cd636d
+				clazz:com.bjike.goddess.businessproject.api.CollectEmailAPI
+
+
+		4.即可测试自己的定时任务
+
+参照模块：商务合同的定时发送邮件，businessproject->CollectEmailSerImpl->checkSendEmail
+
+
+
+权限：
+  功能权限：
+	之前做的是功能导航权限，参照商务合同模块修改一下即可
+  导航下拉权限：
+	参照 商务合同模块businessproject->SiginManageAction->sonPermission , 基本复制
+  设置导航权限：
+	参照 商务合同模块businessproject->SiginManageAction->setButtonPermission，这个方法每个模块只写一次即可，直接复制这个方法过去。
+
+前端访问是先判断我们的“导航下拉权限”，再判断“功能权限”，而谁可以看到操作模块设置权限，我们是在组织结构的总设置权限处进行设置。
+
+
+
+
